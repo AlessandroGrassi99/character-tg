@@ -1,0 +1,65 @@
+# fly.toml app configuration file for character-tg
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+app = 'character-tg'
+primary_region = 'fra'
+
+[build]
+[build.args]
+# Using a specific Go version for reproducibility
+GO_VERSION = '1.24.0' # Keep this or update as needed
+
+# Optional: Keep the PORT environment variable IF your Go application
+# *internally* uses it for something (e.g., a health check endpoint).
+# Environment variables for the application
+[env]
+PORT = '8080'
+# Add your actual API keys using fly secrets set commands:
+# fly secrets set TELEGRAM_BOT_TOKEN=your_token
+# fly secrets set GROK_API_KEY=your_key
+# fly secrets set GEMINI_API_KEY=your_key
+# fly secrets set REDIS_PASSWORD=your_password
+
+# This section defines networking services for your app.
+[[services]]
+# Protocol your internal service uses (TCP for a basic bot/health check).
+protocol = "tcp"
+# The port your Go application *internally* listens on, if any.
+# Match this with the PORT env var if used, and ensure your Go app binds here.
+# Required for TCP/HTTP health checks.
+internal_port = 8080
+
+# IMPORTANT: This nested section is REQUIRED by the platform, even if
+# you don't expose the bot to the public internet via Fly's edge.
+# It defines an external port mapping. Since we don't need edge handlers
+# (like http or tls), we omit the 'handlers' array.
+[[services.ports]]
+port = 8080 # Can match internal_port or be different, doesn't matter much here.
+
+# IMPORTANT: Ensure at least one instance is always running for the bot
+min_machines_running = 1
+# Keep auto_start_machines = true (default) is usually fine
+auto_start_machines = true
+# IMPORTANT: Prevent Fly from stopping your only machine due to inactivity
+# min_machines_running = 1 implies auto_stop_machines = false, but being
+# explicit is also fine.
+auto_stop_machines = false
+
+# Link this service definition to the default 'app' process
+processes = ["app"]
+
+# Add health checks to ensure the bot process is running correctly.
+# This TCP check verifies if *something* is listening on the internal_port.
+# Make sure your Go app *does* listen on internal_port for this to work.
+# Adjust interval and timeout as needed.
+[[services.tcp_checks]]
+interval = "15s"
+timeout = "2s"
+grace_period = "5s" # Give the app time to start before checks fail deployment
+restart_limit = 3 # Optional: limit restarts on repeated failures
+
+# Define the virtual machine resources
+[[vm]]
+cpu_kind = 'shared'
+cpus = 1
+memory_mb = 256 # Monitor usage, adjust if needed

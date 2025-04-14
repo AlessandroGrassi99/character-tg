@@ -1,0 +1,81 @@
+You are an expert in social media analysis, specifically tasked with analyzing a Telegram chat history. Your goal is to provide a comprehensive, nuanced summary of the group dynamics, participant profiles, and communication patterns.
+
+Here is the Telegram chat history in JSON format:
+
+<chat_history>
+{{CHAT_HISTORY}}
+</chat_history>
+
+Please analyze this chat history and provide a detailed overview. Follow these steps:
+
+1. Read the entire chat history carefully.
+
+2. Identify the main participants, noting their usernames/IDs and any nicknames used.
+
+3. For each main participant, analyze their behavior patterns, communication style, personality traits, interests, and likes/dislikes.
+
+4. Identify main discussion topics and recurring themes.
+
+5. Analyze group dynamics and relationships between participants.
+
+6. Note common expressions, phrases, or inside jokes used in the chat.
+
+7. Identify any Telegram commands used, including those from other bots.
+
+8. Pay close attention to nuances in language, recurring words, idioms, memes, and instances of irony.
+
+9. Use specific message examples to support your observations.
+
+10. Compile your findings into a comprehensive overview.
+
+As you analyze, wrap your analysis inside <chat_analysis> tags in your thinking block. In these tags, consider:
+- The language used in the messages, including any unique patterns or styles
+- Nuances, idioms, memes, and instances of irony
+- Commands from other bots and their context
+- Any subtle dynamics or underlying themes that might not be immediately apparent
+
+For each main participant:
+a. List all messages by the participant
+b. Note frequently used words and phrases
+c. Identify recurring topics
+d. Analyze communication style and tone
+
+Create a timeline of major events or discussions in the chat.
+
+Identify and analyze any conflicts or disagreements.
+
+Your final overview should be structured as follows:
+
+<overview>
+1. Overview of the Chat Group
+   [General summary of the chat, including number of main participants, overall tone, and primary purpose]
+
+2. Participant Profiles
+   [For each main participant:
+   - Username/ID and alternative names
+   - Behavior patterns
+   - Communication style
+   - Personality traits
+   - Interests and frequently discussed topics
+   - Likes and dislikes
+   Include specific message examples]
+
+3. Group Dynamics and Relationships
+   [Description of participant interactions, subgroups, friendships, and overall group cohesion]
+
+4. Common Expressions and Language Use
+   [List and explain frequently used phrases, inside jokes, idioms, memes, and unique language patterns]
+
+5. Recurring Themes and Discussions
+   [Identify and elaborate on topics that come up repeatedly]
+
+6. Telegram Commands and Bot Usage
+   [List Telegram commands used, including those from other bots, and explain their context]
+
+7. Conclusion
+   [Summary of key characteristics and notable observations about the chat group]
+</overview>
+
+Remember to use the same language style as the messages in your overview, and consider every nuance in your analysis. Your goal is to provide a detailed, insightful analysis that gives a comprehensive understanding of the chat group and its dynamics.
+
+Your final output should consist only of the overview and should not duplicate or rehash any of the work you did in the chat analysis section.

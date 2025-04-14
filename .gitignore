@@ -1,0 +1,7 @@
+.idea/
+.vscode/
+
+character-tg
+
+.env
+*.json
