@@ -60,7 +60,7 @@ func handlerInitChat(ctx context.Context, b *bot.Bot, update *models.Update) {
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		},
-		Model: "gemini-2.5-pro-exp-03-25", // Adjust model as needed
+		Model: "gemini-2.5-pro-preview-03-25", // Adjust model as needed
 	})
 	if err != nil {
 		log.Printf("Error calling Gemini API: %v", err)
