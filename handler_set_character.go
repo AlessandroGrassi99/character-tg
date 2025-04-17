@@ -32,7 +32,7 @@ func handlerSetCharacter(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
-	chatStorage.SetPrompt(1171388254, commandArgs)
+	chatStorage.SetPrompt(update.Message.Chat.ID, commandArgs)
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,

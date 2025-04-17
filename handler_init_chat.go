@@ -30,7 +30,7 @@ func handlerInitChat(ctx context.Context, b *bot.Bot, update *models.Update) {
 	})
 
 	// Get chat state
-	chatState, ok := chatStorage.GetChatState(1171388254)
+	chatState, ok := chatStorage.GetChatState(update.Message.Chat.ID)
 	if !ok || len(chatState.Messages) == 0 {
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
@@ -84,7 +84,7 @@ func handlerInitChat(ctx context.Context, b *bot.Bot, update *models.Update) {
 	log.Printf("Analysis text: %s", analysisText)
 
 	// Store the summary in the chat state
-	chatStorage.SetSummary(1171388254, analysisText)
+	chatStorage.SetSummary(update.Message.Chat.ID, analysisText)
 
 	// Save analysis to a temporary file
 	tmpFile, err := os.CreateTemp("", "analysis-*.txt")
