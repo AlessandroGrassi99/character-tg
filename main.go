@@ -20,6 +20,7 @@ var (
 	chatStorage  *ChatStorage
 	grokClient   openai.Client
 	geminiClient openai.Client
+	appConfig    Config
 )
 
 // Prompts
@@ -32,7 +33,8 @@ var (
 
 func main() {
 	// General Config
-	config, err := loadConfig()
+	var err error
+	appConfig, err = loadConfig()
 	if err != nil {
 		log.Fatalf("error loading configuration: %v", err)
 		return
@@ -41,16 +43,16 @@ func main() {
 	// Initialize ai clients
 	grokClient = openai.NewClient(
 		option.WithBaseURL("https://api.x.ai/v1"),
-		option.WithAPIKey(config.GrokApiKey),
+		option.WithAPIKey(appConfig.GrokApiKey),
 	)
 
 	geminiClient = openai.NewClient(
 		option.WithBaseURL("https://generativelanguage.googleapis.com/v1beta/openai/"),
-		option.WithAPIKey(config.GeminiApiKey),
+		option.WithAPIKey(appConfig.GeminiApiKey),
 	)
 
 	// Initialize Redis-based chat storage
-	chatStorage = NewChatStorage(config)
+	chatStorage = NewChatStorage(appConfig)
 	if err := chatStorage.Ping(); err != nil {
 		log.Fatalf("redis connection failed: %v", err)
 	}
@@ -68,10 +70,11 @@ func main() {
 	}()
 
 	opts := []bot.Option{
+		bot.WithMiddlewares(allowListMiddleware),
 		bot.WithDefaultHandler(handlerNewMessage),
 	}
 
-	b, err := bot.New(config.TelegramBotToken, opts...)
+	b, err := bot.New(appConfig.TelegramBotToken, opts...)
 	if err != nil {
 		log.Fatalf("failed to create bot instance: %v", err)
 	}
@@ -82,7 +85,7 @@ func main() {
 	b.RegisterHandlerMatchFunc(matchJsonFiles, handlerImportChat)
 
 	// health check server for Fly.io
-	go startHealthCheckServer(&config)
+	go startHealthCheckServer(&appConfig)
 
 	b.Start(ctx)
 }
@@ -99,6 +102,7 @@ func startHealthCheckServer(config *Config) {
 		log.Printf("health check server error: %v", err)
 	}
 }
+
 
 func matchJsonFiles(update *models.Update) bool {
 	if update == nil || update.Message == nil {
