@@ -111,10 +111,9 @@ func matchJsonFiles(update *models.Update) bool {
 	if update == nil || update.Message == nil {
 		return false
 	}
-	isPrivate := update.Message.Chat.Type == "private"
 	containsDocument := update.Message.Document != nil
 
-	if !isPrivate || !containsDocument {
+	if !containsDocument {
 		return false
 	}
 
