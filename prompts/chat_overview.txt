@@ -46,7 +46,6 @@ Identify and analyze any conflicts or disagreements.
 
 Your final overview should be structured as follows:
 
-<overview>
 1. Overview of the Chat Group
    [General summary of the chat, including number of main participants, overall tone, and primary purpose]
 
@@ -74,7 +73,6 @@ Your final overview should be structured as follows:
 
 7. Conclusion
    [Summary of key characteristics and notable observations about the chat group]
-</overview>
 
 Remember to use the same language style as the messages in your overview, and consider every nuance in your analysis. Your goal is to provide a detailed, insightful analysis that gives a comprehensive understanding of the chat group and its dynamics.
 

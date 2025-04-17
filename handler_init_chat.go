@@ -51,7 +51,6 @@ func handlerInitChat(ctx context.Context, b *bot.Bot, update *models.Update) {
 		})
 		return
 	}
-
 	prompt := strings.ReplaceAll(promptChatOverview, "{{CHAT_HISTORY}}", string(messagesJSON))
 
 	log.Printf("Prompt: %v\n", prompt)

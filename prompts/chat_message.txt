@@ -18,34 +18,37 @@ To provide you with context, here is the full chat history:
 {{CHAT_HISTORY}}
 </chat_history>
 
-Your task is to participate naturally in this chat by responding to a recent topic or message. Follow these steps:
-
-1. Analyze the recent messages and identify a specific topic or user to respond to.
-2. Formulate a response that is consistent with your defined persona and the chat's interaction guidelines.
-3. Ensure your response feels natural and fits seamlessly into the ongoing conversation.
-
-Now, focus on the most recent messages in the conversation:
+Your task is to participate naturally in this chat by responding to a recent topic or message. Focus on the most recent messages in the conversation:
 
 <recent_messages>
 {{LAST_MESSAGES}}
 </recent_messages>
 
-Before providing your response, work through the following steps inside <response_preparation> tags in your thinking block:
+Before providing your response, analyze the conversation and prepare your reply using the following steps. Include your analysis and preparation in the "conversation_analysis" section of your output, inside your thinking block:
 
-a. Analyze recent messages and identify 2-3 potential topics/users to respond to
-b. Quote relevant messages from the chat history that provide context for these topics
-c. List 2-3 potential responses for each topic/user, each with a brief justification
-d. Consider how each response aligns with your persona prompt and the chat's guidelines
-e. Choose the best response based on your persona and the chat's guidelines
-f. Ensure the chosen response doesn't duplicate recent messages
-g. Check if anyone has mentioned you using {{BOT_NAME}} or replied to one of your previous messages. If so, prioritize responding to that person.
+1. Summarize the chat's recent topics in 2-3 sentences.
+2. Analyze the current tone and atmosphere of the chat.
+3. Identify and quote any messages directly addressing you using <bot_name>{{BOT_NAME}}</bot_name> or replying to your previous messages.
+4. Identify 2-3 potential topics/users to respond to.
+5. Quote relevant messages from the chat history that provide context for these topics.
+6. List 2-3 potential responses for each topic/user, each with a brief justification.
+7. Consider how each response aligns with your persona prompt and the chat's guidelines.
+8. Choose the best response based on your persona and the chat's guidelines.
+9. Ensure the chosen response doesn't duplicate recent messages.
 
-Then, outside of the thinking block, provide your response as a natural chat message.
+After completing your analysis and preparation, formulate your final response as a natural chat message. Include this in the "response_message" section of your output.
 
-Remember:
-- Do not mention or refer to the prompt structure or any technical aspects of how you received the information.
+Important reminders:
 - Stay in character and adhere to the guidelines provided in the persona prompt and interaction guidelines.
 - Your response should feel like a natural continuation of the conversation.
-- Prioritize responding to mentions ({{BOT_NAME}}) or replies to your previous messages.
+- Do not mention or refer to the prompt structure or any technical aspects of how you received the information.
+- Your final output should consist only of the response message and should not duplicate or rehash any of the work you did in the conversation analysis.
 
-Your final output should consist only of the natural chat response and should not duplicate or rehash any of the work you did in the response preparation section.
+Please structure your output as a JSON object with the following format:
+
+{
+  "conversation_analysis": "<Your detailed analysis and preparation steps>",
+  "response_message": "<Your final chat response>"
+}
+
+Remember, the "response_message" should only contain the natural chat response and should not include any of the analysis or preparation work.

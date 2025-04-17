@@ -10,114 +10,112 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/shared"
 )
 
+// NewMessageResponse represents the JSON structure returned by the AI model
+type NewMessageResponse struct {
+	ConversationAnalysis string `json:"conversation_analysis"`
+	ResponseMessage      string `json:"response_message"`
+}
+
+// handlerNewMessage processes incoming text messages and replies using the AI model
 func handlerNewMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
 	chatID := update.Message.Chat.ID
-
-	if update.Message.Text == "" { // Ignore non-text messages for history/counting
-		log.Printf("Ignoring non-text message (e.g., sticker, photo) in chat %d", chatID)
+	if update.Message.Text == "" {
+		log.Printf("Ignoring non-text message in chat %d", chatID)
 		return
 	}
 
-	// Store the full message object
-	chatStorage.StoreMessage(1171388254, *update.Message)
+	chatStorage.StoreMessage(chatID, *update.Message)
+	prompt := buildChatMessages(ctx, b, chatID, 1000)
 
-	resp, err := grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+	req := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.UserMessage(buildChatMessages(ctx, b, 1171388254, 1000)),
+			openai.UserMessage(prompt),
 		},
 		Model:           "grok-3-mini-beta",
 		ReasoningEffort: "low",
-	})
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
+		},
+	}
+
+	resp, err := grokClient.Chat.Completions.New(ctx, req)
 	if err != nil {
-		panic(err)
+		log.Printf("Error calling llm model")
+		return
 	}
-
-	responseText := resp.Choices[0].Message.Content
-
-	// Remove message planning section from the response
-	cleanedResponse := responseText
-	if planningStart := strings.Index(responseText, "<response_preparation>"); planningStart != -1 {
-		if planningEnd := strings.Index(responseText, "</response_preparation>"); planningEnd != -1 {
-			log.Printf("Found planning end at position %d", planningEnd)
-
-			// Check if there's content before the planning section
-			var beforePlanning string
-			if planningStart > 0 {
-				beforePlanning = strings.TrimSpace(responseText[:planningStart])
-			}
-
-			// Check if there's content after the planning section
-			var afterPlanning string
-			if planningEnd+len("</response_preparation>") < len(responseText) {
-				afterPlanning = strings.TrimSpace(responseText[planningEnd+len("</response_preparation>"):])
-			}
-
-			// Decide what to use as the cleaned response
-			if afterPlanning != "" {
-				// If there's content after planning, use that
-				cleanedResponse = afterPlanning
-			} else if beforePlanning != "" {
-				// If there's only content before planning, use that
-				cleanedResponse = beforePlanning
-			}
-		}
-	}
-
-	// Create new message with cleaned response
-	messageToSend := &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   cleanedResponse,
-	}
-
-	sentMsg, err := b.SendMessage(ctx, messageToSend)
-	if err != nil {
-		log.Printf("Error sending message: %v", err)
+	if len(resp.Choices) == 0 || resp.Choices[0].Message.Content == "" {
+		log.Printf("Llm client returned empty response")
 		return
 	}
 
-	chatStorage.StoreMessage(1171388254, *sentMsg)
+	var result NewMessageResponse
+	raw := resp.Choices[0].Message.Content
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		fallback := fmt.Sprintf("Sorry, I had trouble formatting my response. Raw output: %s", raw)
+		if len(fallback) > 4000 {
+			fallback = fallback[:4000] + "..."
+		}
+		sendChatMessage(ctx, b, chatID, fallback)
+		return
+	}
+
+	if msg := strings.TrimSpace(result.ResponseMessage); msg != "" {
+		sendChatMessage(ctx, b, chatID, msg)
+	}
 }
 
+// buildChatMessages constructs the prompt using stored chat history and templates
 func buildChatMessages(ctx context.Context, b *bot.Bot, chatID int64, limit int) string {
-	chatState, ok := chatStorage.GetChatState(chatID)
+	state, ok := chatStorage.GetChatState(chatID)
 	if !ok {
-		return "Just reply: No prompt provided"
+		log.Printf("Chat state not found for %d", chatID)
+		return `{"error":"state missing","response_preparation":"","response_message":""}`
 	}
 
-	finalPrompt := promptChatMessage
-	finalPrompt = strings.Replace(finalPrompt, "{{PROMPT}}", chatState.Prompt, 1)
-	finalPrompt = strings.Replace(finalPrompt, "{{OVERVIEW}}", chatState.Summary, 1)
+	prompt := promptChatMessage
+	prompt = strings.Replace(prompt, "{{PROMPT}}", state.Prompt, 1)
+	prompt = strings.Replace(prompt, "{{OVERVIEW}}", state.Summary, 1)
 
 	me, err := b.GetMe(ctx)
-	if err != nil {
-		log.Printf("error getting information about the bot: %v", err)
+	botName := "@Bot"
+	if err == nil {
+		botName = "@" + me.Username
 	} else {
-		botName := fmt.Sprintf("%s %s: @%s", me.FirstName, me.LastName, me.Username)
-		finalPrompt = strings.ReplaceAll(finalPrompt, "{{BOT_NAME}}", botName)
+		log.Printf("Error getting bot info: %v", err)
+	}
+	prompt = strings.ReplaceAll(prompt, "{{BOT_NAME}}", botName)
+
+	total := len(state.Messages)
+	start := max(total-limit, 0)
+	last := max(start, total-20)
+
+	if data, err := json.Marshal(state.Messages[last:]); err == nil {
+		prompt = strings.Replace(prompt, "{{LAST_MESSAGES}}", string(data), 1)
+	} else {
+		log.Printf("Error marshaling last messages: %v", err)
+		prompt = strings.Replace(prompt, "{{LAST_MESSAGES}}", "[]", 1)
 	}
 
-	// Last 20 messages for {{LAST_MESSAGES}}
-	startIndex := max(len(chatState.Messages)-limit, 0)
-	lastMsgCount := 20
-	lastMsgStartIndex := max(len(chatState.Messages)-lastMsgCount, startIndex)
-	lastMessagesJSON, err := json.Marshal(chatState.Messages[lastMsgStartIndex:])
-	if err != nil {
-		log.Printf("Error marshaling last messages to JSON: %v", err)
-		return "Error: Could not process recent messages"
+	if data, err := json.Marshal(state.Messages[start:last]); err == nil {
+		prompt = strings.Replace(prompt, "{{CHAT_HISTORY}}", string(data), 1)
+	} else {
+		log.Printf("Error marshaling history messages: %v", err)
+		prompt = strings.Replace(prompt, "{{CHAT_HISTORY}}", "[]", 1)
 	}
 
-	// All previous messages for {{CHAT_HISTORY}}
-	historyJSON, err := json.Marshal(chatState.Messages[startIndex:lastMsgStartIndex])
-	if err != nil {
-		log.Printf("Error marshaling history messages to JSON: %v", err)
-		return "Error: Could not process chat history"
+	log.Printf("Final prompt: %.200s...", prompt)
+	return prompt
+}
+
+// sendChatMessage sends a message and stores it in chat history
+func sendChatMessage(ctx context.Context, b *bot.Bot, chatID int64, text string) {
+	params := &bot.SendMessageParams{ChatID: chatID, Text: text}
+	if msg, err := b.SendMessage(ctx, params); err != nil {
+		log.Printf("Error sending message: %v", err)
+	} else {
+		chatStorage.StoreMessage(chatID, *msg)
 	}
-
-	finalPrompt = strings.Replace(finalPrompt, "{{CHAT_HISTORY}}", string(historyJSON), 1)
-	finalPrompt = strings.Replace(finalPrompt, "{{LAST_MESSAGES}}", string(lastMessagesJSON), 1)
-
-	log.Printf("Prompt: %v\n", finalPrompt)
-	return finalPrompt
 }
