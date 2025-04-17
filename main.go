@@ -68,7 +68,7 @@ func main() {
 	}()
 
 	opts := []bot.Option{
-		bot.WithDefaultHandler(defaultHandler),
+		bot.WithDefaultHandler(handlerNewMessage),
 	}
 
 	b, err := bot.New(config.TelegramBotToken, opts...)
@@ -76,10 +76,10 @@ func main() {
 		log.Fatalf("failed to create bot instance: %v", err)
 	}
 
-	b.RegisterHandler(bot.HandlerTypeMessageText, "config", bot.MatchTypeCommand, setCharacter)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "init", bot.MatchTypeCommand, initChat)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "config", bot.MatchTypeCommand, handlerSetCharacter)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "init", bot.MatchTypeCommand, handlerInitChat)
 
-	b.RegisterHandlerMatchFunc(matchJsonFiles, importChat)
+	b.RegisterHandlerMatchFunc(matchJsonFiles, handlerImportChat)
 
 	// health check server for Fly.io
 	go startHealthCheckServer(&config)
