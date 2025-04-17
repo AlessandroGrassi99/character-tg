@@ -19,6 +19,7 @@ PORT = '8080'
 # fly secrets set GROK_API_KEY=your_key
 # fly secrets set GEMINI_API_KEY=your_key
 # fly secrets set REDIS_PASSWORD=your_password
+# fly secrets set GROUP_REPLY_PROBABILITY=0.5  # Controls probability (0.0-1.0) of replying to messages in group chats
 
 # This section defines networking services for your app.
 [[services]]

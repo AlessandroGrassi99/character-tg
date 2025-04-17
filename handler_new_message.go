@@ -19,6 +19,7 @@ type NewMessageResponse struct {
 	ResponseMessage      string `json:"response_message"`
 }
 
+
 // handlerNewMessage processes incoming text messages and replies using the AI model
 func handlerNewMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
 	chatID := update.Message.Chat.ID
@@ -27,7 +28,6 @@ func handlerNewMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
 		return
 	}
 
-	chatStorage.StoreMessage(chatID, *update.Message)
 	prompt := buildChatMessages(ctx, b, chatID, 1000)
 
 	req := openai.ChatCompletionNewParams{

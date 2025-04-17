@@ -32,6 +32,9 @@ var (
 )
 
 func main() {
+	// rand.Seed is deprecated in Go 1.20+, but we don't need to explicitly initialize 
+	// the random number generator in newer Go versions
+	
 	// General Config
 	var err error
 	appConfig, err = loadConfig()
@@ -70,7 +73,7 @@ func main() {
 	}()
 
 	opts := []bot.Option{
-		bot.WithMiddlewares(allowListMiddleware),
+		bot.WithMiddlewares(allowListMiddleware, storeMessageMiddleware, randomReplyMiddleware),
 		bot.WithDefaultHandler(handlerNewMessage),
 	}
 

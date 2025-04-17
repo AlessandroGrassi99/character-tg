@@ -10,13 +10,14 @@ import (
 )
 
 type Config struct {
-	TelegramBotToken string
-	GrokApiKey       string
-	GeminiApiKey     string
-	RedisAddr        string
-	RedisPassword    string
-	HttpServerPort   string
-	AllowedChatIDs   []int64
+	TelegramBotToken       string
+	GrokApiKey             string
+	GeminiApiKey           string
+	RedisAddr              string
+	RedisPassword          string
+	HttpServerPort         string
+	AllowedChatIDs         []int64
+	GroupReplyProbability  float64 // Probability (0.0-1.0) of replying to messages in group chats
 }
 
 func loadConfig() (Config, error) {
@@ -31,6 +32,23 @@ func loadConfig() (Config, error) {
 	config.RedisAddr = getEnv("REDIS_ADDR", "localhost:6379")
 	config.RedisPassword = os.Getenv("REDIS_PASSWORD")
 	config.HttpServerPort = getEnv("PORT", "8080")
+	
+	// Parse group reply probability from environment variable (default to 1.0 - always reply)
+	probabilityStr := getEnv("GROUP_REPLY_PROBABILITY", "1.0")
+	var probability float64
+	if _, err := fmt.Sscanf(probabilityStr, "%f", &probability); err != nil {
+		log.Printf("warning: invalid GROUP_REPLY_PROBABILITY value: %s, using default 1.0", probabilityStr)
+		probability = 1.0
+	} else if probability < 0.0 || probability > 1.0 {
+		log.Printf("warning: GROUP_REPLY_PROBABILITY out of range (0.0-1.0): %f, using clamped value", probability)
+		if probability < 0.0 {
+			probability = 0.0
+		} else {
+			probability = 1.0
+		}
+	}
+	config.GroupReplyProbability = probability
+	log.Printf("Group chat reply probability set to: %.2f", probability)
 	
 	// Parse allowed chat IDs from environment variable
 	allowedChatsStr := os.Getenv("ALLOWED_CHAT_IDS")
